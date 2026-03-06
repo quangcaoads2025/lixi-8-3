@@ -717,6 +717,7 @@
         });
     }
 
+    // --- PHẦN ĐĂNG NHẬP MỚI ĐÃ ĐƯỢC BẢO MẬT BẰNG APP SCRIPT ---
     btnLogin.addEventListener('click', () => {
       const user = document.getElementById('loginUser').value.trim();
       const pass = document.getElementById('loginPass').value.trim();
@@ -728,17 +729,33 @@
         return;
       }
 
-      if (user === 'admin' && pass === 'admin123@') {
-        loginError.style.display = 'none';
-        if (remember) { localStorage.setItem('NA_LOGGED_IN', 'true'); } 
-        else { localStorage.removeItem('NA_LOGGED_IN'); }
-        document.getElementById('loginPage').style.display = 'none';
-        document.getElementById('main-app-content').style.display = 'block';
-        if (typeof window.showPopup === 'function') { window.showPopup(); }
-      } else {
-        loginError.textContent = 'Sai thông tin đăng nhập!';
-        loginError.style.display = 'block';
-      }
+      btnLogin.textContent = 'ĐANG KIỂM TRA...';
+      btnLogin.disabled = true;
+
+      // Gọi hàm qcadsJsonp được định nghĩa ở thẻ script bên dưới
+      qcadsJsonp(QCADS_API_URL, { action: "checkLogin", u: user, p: pass })
+        .then(resp => {
+          if (resp && resp.success === true) {
+            loginError.style.display = 'none';
+            if (remember) { localStorage.setItem('NA_LOGGED_IN', 'true'); } 
+            else { localStorage.removeItem('NA_LOGGED_IN'); }
+            
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('main-app-content').style.display = 'block';
+            if (typeof window.showPopup === 'function') { window.showPopup(); }
+          } else {
+            loginError.textContent = 'Tên đăng nhập hoặc mật khẩu không đúng!';
+            loginError.style.display = 'block';
+          }
+        })
+        .catch(err => {
+          loginError.textContent = 'Lỗi kết nối máy chủ, vui lòng thử lại!';
+          loginError.style.display = 'block';
+        })
+        .finally(() => {
+          btnLogin.textContent = 'ĐĂNG NHẬP';
+          btnLogin.disabled = false;
+        });
     });
 
     document.getElementById('loginPass').addEventListener('keydown', e => { if(e.key === 'Enter'){ btnLogin.click(); } });
@@ -746,6 +763,7 @@
   </script>
 
   <script type="text/javascript">
+    // Đảm bảo Link App Script này của bạn đang hoạt động
     var QCADS_API_URL = "https://script.google.com/macros/s/AKfycbyA_KkAor558Kifkyg-JkLnQ4viQYqMK9ln1C1gGxC-7n0U0wUyKl0vvTetYRWbOBI7Yw/exec";
 
     function qcadsShowAlert(text){
